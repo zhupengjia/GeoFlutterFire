@@ -10,8 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cloud_firestore: ^0.14.0+2
-  rxdart: ^0.24.1
+  cloud_firestore: any
+  rxdart: any
 
 flutter:
   plugin:
