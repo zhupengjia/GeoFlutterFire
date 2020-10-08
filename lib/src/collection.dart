@@ -83,15 +83,17 @@ class GeoFireCollectionRef {
     @required double radius,
     @required String field,
     int limit,
+    int startAt,
     bool strictMode = false,
   }) {
     final precision = Util.setPrecision(radius);
     final centerHash = center.hash.substring(0, precision);
     final queryLimit = limit;
+    final queryStartAt = startAt;
     final area = GeoFirePoint.neighborsOf(hash: centerHash)..add(centerHash);
 
     Iterable<Stream<List<DistanceDocSnapshot>>> queries = area.map((hash) {
-      final tempQuery = _queryPoint(hash, field, queryLimit);
+      final tempQuery = _queryPoint(hash, field, queryLimit, queryStartAt);
       return _createStream(tempQuery).map((QuerySnapshot querySnapshot) {
         return querySnapshot.docs
             .map((element) => DistanceDocSnapshot(element, null))
@@ -154,15 +156,23 @@ class GeoFireCollectionRef {
   /// INTERNAL FUNCTIONS
 
   /// construct a query for the [geoHash] and [field]
-  Query _queryPoint(String geoHash, String field, int limit) {
+  Query _queryPoint(String geoHash, String field, int limit, int startAt) {
     final end = '$geoHash~';
     final temp = _collectionReference;
     if (limit == null)
       return temp.orderBy('$field.geohash').startAt([geoHash]).endAt([end]);
-    else
+    else if (startAt == null)
       return temp
           .orderBy('$field.geohash')
           .startAt([geoHash]).endAt([end]).limit(limit);
+    else {
+      return temp
+          .orderBy('$field.geohash')
+          .startAt([geoHash])
+          .endAt([end])
+          .limit(limit + startAt)
+          .limitToLast(limit);
+    }
   }
 
   /// create an observable for [ref], [ref] can be [Query] or [CollectionReference]
